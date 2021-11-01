@@ -145,6 +145,7 @@ static int get_usrinput(char *, size_t, const char *, ...);
 static int frules(char *);
 static int spawn(const void *, size_t, const void *, size_t, char *, int);
 static int opnf(char *);
+static void opnfas(const Arg *arg);
 static int fsev_init(void);
 static int addwatch(Pane *);
 static int read_events(void);
@@ -1065,6 +1066,34 @@ opnf(char *fn)
 	else
 		return spawn(
 			(char **)rules[c].v, rules[c].vlen, NULL, 0, fn, Wait);
+}
+
+static void
+opnfas(const Arg *arg)
+{
+	if (cpane->dirc < 1)
+		return;
+	char prompt[32];
+	char *custom_cmd[2];
+	int s;
+
+	sprintf(prompt, "open with: ");
+
+	custom_cmd[0] = ecalloc(1, sizeof(char));
+	if (get_usrinput(custom_cmd[0], 64, prompt) < 0) {
+		free(custom_cmd[0]);
+		return;
+	}
+
+	tb_shutdown();
+	custom_cmd[1]=NULL;
+	s = spawn(custom_cmd, 1, NULL, 0, CURSOR(cpane).name, Wait);
+	if (tb_init() != 0)
+		die("tb_init");
+	t_resize();
+	if (s < 0)
+		print_error("process failed non-zero exit");
+	free(custom_cmd[0]);
 }
 
 static void
